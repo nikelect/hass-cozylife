@@ -2,7 +2,7 @@
 from __future__ import annotations
 from homeassistant.components import zeroconf
 import logging
-from .tcp_client import tcp_client
+from tcp_client import tcp_client
 from datetime import timedelta
 
 from homeassistant.components.sensor import SensorEntity
@@ -37,7 +37,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers import entity_platform
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from typing import Any, Final, Literal, TypedDict, final
-from .const import (
+from const import (
     DOMAIN,
     SWITCH_TYPE_CODE,
     LIGHT_TYPE_CODE,

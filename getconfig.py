@@ -26,7 +26,7 @@ if len(sys.argv) > 2:
   end = sys.argv[2]
   start = sys.argv[1]
 for ip in ips(start, end):
-  a = tcp_client(ip, timeout=0.1)
+  a = tcp_client(ip, timeout=0.2)
   a._initSocket()
   if a._connect:
     a._device_info()
