@@ -1,10 +1,10 @@
 """ Controls/Read a Smart Switch trough command line.
 
     Command Examples:
-    send_command.py --ip 192.168.1.199 --state 0 # All Gangs OFF
-    send_command.py --ip 192.168.1.199 --state 1 # Gang1 ON
-    send_command.py --ip 192.168.1.199 --state 5 # Gang1 ON + Gang3 ON
-    send_command.py --ip 192.168.1.199 --toggle # toggle Gang1
+    send_command.py control --ip 192.168.1.199 --function set_gang --gang-code 0 # All Gangs OFF
+    send_command.py control --ip 192.168.1.199 --function set_gang --gang-code 1 # Gang1 ON
+    send_command.py control --ip 192.168.1.199 --function set_gang --gang-code 5 # Gang1 ON + Gang3 ON
+    send_command.py control --ip 192.168.1.199 --function toggle --gang-code (2, 4 or 6) (Gang1, Gang2, Gang3)
     send_command.py get_state --ip 192.168.1.199
 
 """
@@ -13,14 +13,18 @@ import sys
 
 from custom_components.cozylife.tcp_client import tcp_client
 
-def control(device, options):
+def control(device, function, gang_code):
     """ Controls a Relay state.
     
     Parameters
     ----------
     device : tcp_client
         TCP device.
-    options : argparse
+    function : string
+        "toggle" - toggle the relay.
+        "set_gang" - Turn ON or OFF the gangs sending a code.
+        ""
+    gang_code : int
         0 - All Gangs OFF
         1 - Gang1 ON
         2 - Gang2
@@ -32,21 +36,41 @@ def control(device, options):
     """
     if device._connect:
         # Tested with MINI Smart Switch - Apple Homekit Smart
-        if options.toggle:
-            status = device.control({'2': 1})
-        else: # --state
-            status = device.control({'1': options.state})
+        if "toggle" == function:
+            status = device.control({gang_code: 1})
+        elif "set_gang" == function:
+            status = device.control({'1': gang_code})
+        else:
+            print("Unrecognized function!")
    
         if status != True:
             print("Fail sending the Control Command!")
     else:
         print("Error: Not Connected!")
 
-    # Print return state.
+    # Print return state json message.
     print(device.query())
     
-def get_state(device, options):
+def get_state(device):
     """ Read a Relay state.
+    
+    Parameters
+    ----------
+    device : tcp_client
+        TCP device.
+
+    """
+    # Print return state json message.
+    print(device.query())
+    # State Examples:
+    # {'1': 0}
+    # {'1': 1}
+    # {'2': 1}
+    # {'1': 0, '2': 1}
+    # {'1': 1, '2': 0}
+
+def call_method(device, options):
+    """ Call the method defined in the command line.
     
     Parameters
     ----------
@@ -56,14 +80,10 @@ def get_state(device, options):
         Command line options.
 
     """
-    # Print return state.
-    print(device.query())
-    # State Examples:
-    # {'1': 0}
-    # {'1': 1}
-    # {'2': 1}
-    # {'1': 0, '2': 1}
-    # {'1': 1, '2': 0}
+    if options.command.__name__ == "control":
+        control(device, options.function, options.gang_code)
+    elif options.command.__name__ == "get_state":
+        get_state(device)
 
 def main(arguments):   
     optparse = argparse.ArgumentParser(
@@ -80,14 +100,13 @@ def main(arguments):
 
     subparsers.required = True
 
-    control_parser = subparsers.add_parser('control', help='control the Relay State 0 or 1.')
+    control_parser = subparsers.add_parser('control', help='control a relay State "on", "off "or "toggle".')
     control_parser.add_argument("--ip", required=True, help="device ip")
     control_parser.set_defaults(command=control)
-    group = control_parser.add_mutually_exclusive_group()
-    group.add_argument("--state", type=int, help="device state")
-    group.add_argument("--toggle", action='store_true', help="toggle the relay state.")
+    control_parser.add_argument("--gang-code", type=int, help="gang code")
+    control_parser.add_argument("--function", type=str, help="'on', 'off' or 'toggle'")
 
-    get_state_parser = subparsers.add_parser('get_state', help='gets the realy state 0 or 1.')
+    get_state_parser = subparsers.add_parser('get_state', help='gets the relay/s state 0 or 1.')
     get_state_parser.add_argument("--ip", required=True, help="device ip")
     get_state_parser.set_defaults(command=get_state)
 
@@ -97,7 +116,7 @@ def main(arguments):
     device._initSocket()
 
     # Call corresponding function
-    options.command(device, options)
+    call_method(device, options)
 
 # Execute main function
 if __name__ == "__main__":
