@@ -1,9 +1,10 @@
 """ Controls/Read a Smart Switch trough command line.
 
     Command Examples:
-    send_command.py --ip 192.168.1.199 --state 0
-    send_command.py --ip 192.168.1.199 --state 1
-    send_command.py --ip 192.168.1.199 --toggle
+    send_command.py --ip 192.168.1.199 --state 0 # All Gangs OFF
+    send_command.py --ip 192.168.1.199 --state 1 # Gang1 ON
+    send_command.py --ip 192.168.1.199 --state 5 # Gang1 ON + Gang3 ON
+    send_command.py --ip 192.168.1.199 --toggle # toggle Gang1
     send_command.py get_state --ip 192.168.1.199
 
 """
@@ -20,8 +21,14 @@ def control(device, options):
     device : tcp_client
         TCP device.
     options : argparse
-        Command line options.
-
+        0 - All Gangs OFF
+        1 - Gang1 ON
+        2 - Gang2
+        3 - Gang1 ON + Gang2 ON
+        4 - Gang3 ON
+        5 - Gang1 ON + Gang3 ON
+        6 - Gang2 ON + Gang3 ON
+        7 - All Gangs OFF
     """
     if device._connect:
         # Tested with MINI Smart Switch - Apple Homekit Smart
